@@ -1,11 +1,15 @@
 use std::collections::BTreeMap;
 
+type AccountId = String;
+type BlockNumber = u32;
+type Nonce = u32;
+
 
 
 #[derive(Debug)]
 pub struct Pallet {
-    block_number: u32,
-    nonce: BTreeMap<String, u32>,
+    block_number: BlockNumber,
+    nonce: BTreeMap<AccountId, Nonce>,
 }
 
 impl Pallet {
@@ -16,7 +20,7 @@ impl Pallet {
         }
     }
 
-    pub fn block_number(&self) -> u32 {
+    pub fn block_number(&self) -> BlockNumber {
         self.block_number
     }
 
@@ -24,7 +28,7 @@ impl Pallet {
         self.block_number += 1
     }
 
-    pub fn inc_nonce(&mut self, who: &String) {
+    pub fn inc_nonce(&mut self, who: &AccountId) {
         let nonce = *self.nonce.get(who).unwrap_or(&0);
         let new_nonce = nonce + 1;
         self.nonce.insert(who.clone(), new_nonce);
