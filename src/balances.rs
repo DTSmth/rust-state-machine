@@ -5,41 +5,41 @@ use crate::balances;
 type AccountId = String;
 type Balance = u128;
 
-#[derive(Debug)]
-pub struct Pallet<AccountId, Balance> {
-    balances: BTreeMap<AccountId, Balance>,
+pub trait Config  {
+    type AccountId: Ord + Clone;
+    type Balance: Zero + CheckedSub + CheckedAdd + Copy;
 }
 
-impl Pallet<AccountId, Balance>
-where
-    AccountId: Ord + Clone,
-    Balance: Zero + CheckedSub + CheckedAdd,
+#[derive(Debug)]
+pub struct Pallet<T: Config> {
+    balances: BTreeMap<T::AccountId, T::Balance>,
+}
+
+impl<T: Config> Pallet<T>
 {
     pub fn new() -> Self {
         Self {
             balances: BTreeMap::new()
         }
     }
-    pub fn set_balance(&mut self, who: &AccountId, amount: Balance) {
+    pub fn set_balance(&mut self, who: &T::AccountId, amount: T::Balance) {
         self.balances.insert(who.clone(), amount);
     }
-    pub fn balance(&self, who: &AccountId) -> Balance {
-        *self.balances.get(who).unwrap_or(&Balance::zero())
+    pub fn balance(&self, who: &T::AccountId) -> T::Balance {
+        *self.balances.get(who).unwrap_or(&T::Balance::zero())
     }
 
     pub fn transfer(
         &mut self,
-        caller: AccountId,
-        to: AccountId,
-        amount: Balance,
+        caller: T::AccountId,
+        to: T::AccountId,
+        amount: T::Balance,
     ) -> Result<(), &'static str> {
         let caller_balance = self.balance(&caller);
         let to_balance = self.balance(&to);
 
-        // let new_caller_balance = caller_ballance.checked_sub(amount).ok_or("Not enough funds")?;
-        // let new_to_balance = to_ballance.checked_add(amount).ok_or("Overflow")?;
-        let new_caller_balance = caller_balance.checked_sub(amount).ok_or("Not enough funds.")?;
-        let new_to_balance = to_balance.checked_add(amount).ok_or("Overflow")?;
+        let new_caller_balance = caller_balance.checked_sub(&amount).ok_or("Not enough funds.")?;
+        let new_to_balance = to_balance.checked_add(&amount).ok_or("Overflow")?;
 
         self.balances.insert(caller, new_caller_balance);
         self.balances.insert(to, new_to_balance);
@@ -51,9 +51,15 @@ where
 
 #[cfg(test)]
 mod tests {
+
+    struct TestConfig;
+    impl super::Config for TestConfig {
+        type AccountId = String;
+        type Balance = u128;
+    }
     #[test]
     fn init_balances() {
-        let mut balances = super::Pallet::<String, u128>::new();
+        let mut balances = super::Pallet::<TestConfig>::new();
 
         assert_eq!(balances.balance(&"alice".to_string()), 0);
         balances.set_balance(&"alice".to_string(), 100);
@@ -63,7 +69,7 @@ mod tests {
 
     #[test]
     fn transfer_balance() {
-        let mut balances = super::Pallet::<String, u128>::new();
+        let mut balances = super::Pallet::<TestConfig>::new();
 
         assert_eq!(
             balances.transfer("alice".to_string(), "bob".to_string(), 51),
