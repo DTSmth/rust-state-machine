@@ -3,6 +3,7 @@ mod system;
 mod support;
 
 use crate::support::Dispatch;
+use crate::types::{AccountId, Balance};
 
 mod types {
     pub type AccountId = String;
@@ -17,7 +18,7 @@ mod types {
 // These are all the calls which are exposed to the world.
 // Note that it is just an accumulation of the calls exposed by each module.
 pub enum RuntimeCall {
-    // TODO: Not implemented yet.
+    BalancesTransfer {to: types::AccountId, amount: types::Balance},
 }
 
 #[derive(Debug)]
@@ -48,7 +49,7 @@ impl Runtime {
     fn execute_block(&mut self, block: types::Block) -> support::DispatchResult {
         self.system.inc_block_number();
         if (block.header.block_number != self.system.block_number()) {
-            return Err("block number does not match what is expected")
+            return Err("block number does not match what is expected");
         }
         for (i, support::Extrinsic {caller, call}) in block.extrinsics.into_iter().enumerate() {
             self.system.inc_nonce(&caller);
@@ -76,7 +77,12 @@ impl crate::support::Dispatch for Runtime {
         caller: Self::Caller,
         runtime_call: Self::Call,
     ) -> support::DispatchResult {
-        unimplemented!();
+        match runtime_call {
+            RuntimeCall::BalancesTransfer { to, amount } => {
+                self.balances.transfer(caller, to, amount)?;
+            },
+        }
+        Ok(())
     }
 }
 
