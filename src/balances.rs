@@ -25,7 +25,10 @@ impl<T: Config> Pallet<T>
     pub fn balance(&self, who: &T::AccountId) -> T::Balance {
         *self.balances.get(who).unwrap_or(&T::Balance::zero())
     }
+}
 
+#[macros::call]
+impl<T: Config> Pallet<T> {
     pub fn transfer(
         &mut self,
         caller: T::AccountId,
@@ -46,23 +49,23 @@ impl<T: Config> Pallet<T>
     }
 }
 
-pub enum Call<T: Config> {
-    Transfer {to: T::AccountId, amount: T::Balance},
-}
+// pub enum Call<T: Config> {
+//     Transfer {to: T::AccountId, amount: T::Balance},
+// }
 
-impl<T: Config> crate::support::Dispatch for Pallet<T> {
-    type Caller = T::AccountId;
-    type Call = Call<T>;
-
-    fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult {
-        match call {
-            Call::Transfer { to, amount } => {
-                self.transfer(caller, to, amount)?;
-            },
-        }
-        Ok(())
-    }
-}
+// impl<T: Config> crate::support::Dispatch for Pallet<T> {
+//     type Caller = T::AccountId;
+//     type Call = Call<T>;
+// 
+//     fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> DispatchResult {
+//         match call {
+//             Call::Transfer { to, amount } => {
+//                 self.transfer(caller, to, amount)?;
+//             },
+//         }
+//         Ok(())
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
